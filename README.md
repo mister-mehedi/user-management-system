@@ -6,12 +6,17 @@ A simple RESTful API built with Spring Boot that demonstrates fundamental concep
 
 ## 📋 Table of Contents
 
-- [Project Overview](#project-overview)
+- [📝 Project Overview](#project-overview)
 - [🚀 Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
     - [🗄️ Database Setup](#️database-setup)
     - [🔧 Application Configuration](#application-configuration)
 - [▶️ Running the Application](#️running-the-application)
+- [💾 Data Model](#data-model)
+- [🛡️ Security Configuration](#security-configuration)
+- [🔌 API Endpoints](#api-endpoints)
+- [🧪 Testing with Postman](#testing-with-postman)
+- [🤔 Assumptions](#assumptions)
 
 ---
 
@@ -32,31 +37,25 @@ The primary goal of this project is to provide a secure backend service for mana
 
 ## 🚀 Getting Started
 
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+Follow these instructions to get a copy of the project up and running on your local machine.
 
 ### Prerequisites
 
-Make sure you have the following software installed on your system:
-
-- [Java Development Kit (JDK) 17 or higher](https://www.oracle.com/java/technologies/javase-jdk17-downloads.html)
-- [Apache Maven](https://maven.apache.org/download.cgi)
-- [PostgreSQL](https://www.postgresql.org/download/)
-- An IDE of your choice (e.g., IntelliJ IDEA, VS Code, Eclipse)
+- JDK 17 or higher
+- Apache Maven
+- PostgreSQL
 
 ---
 
 ## 🗄️ Database Setup
 
-You need to create a PostgreSQL database for the application to connect to.
-
-1. Open your PostgreSQL client (like `psql` or a GUI tool like pgAdmin).
-2. Create a new database named `intern_db`:
+1. Create a PostgreSQL database named `intern_db`:
 
    ```sql
    CREATE DATABASE intern_db;
    ```
 
-3. Create a dedicated user and grant privileges:
+2. Create a user and grant privileges (replace `myuser` and `mypassword` with your credentials):
 
    ```sql
    CREATE USER myuser WITH PASSWORD 'mypassword';
@@ -67,61 +66,96 @@ You need to create a PostgreSQL database for the application to connect to.
 
 ## 🔧 Application Configuration
 
-1. Clone the repository to your local machine:
+1. Clone the repository:
 
    ```bash
    git clone <your-repository-url>
    cd user-management-system
    ```
 
-2. Navigate to the `src/main/resources` directory and open the `application.properties` file.
-
-3. Update the database connection properties:
+2. Open the `src/main/resources/application.properties` file and update:
 
    ```properties
-   # PostgreSQL Database connection settings
-   spring.datasource.url=jdbc:postgresql://localhost:5432/intern_db
    spring.datasource.username=myuser
    spring.datasource.password=mypassword
-   spring.datasource.driver-class-name=org.postgresql.Driver
    ```
 
 ---
 
 ## ▶️ Running the Application
 
-Once the prerequisites and configuration are complete, you can run the application using Maven:
+Use the following Maven command to run the application:
 
-1. Open a terminal or command prompt in the root directory of the project.
-2. Execute the following Maven command:
+```bash
+mvn spring-boot:run
+```
 
-   ```bash
-   mvn spring-boot:run
-   ```
+The application will start on [http://localhost:8080](http://localhost:8080).
 
-The application will start on the embedded Tomcat server, typically on port `8080`. You should see log output indicating a successful connection to the `intern_db` database.
-
+---
 
 ## 💾 Data Model
 
-The application's data layer is managed by **Spring Data JPA**. It uses an `Entity` class to map to a database table and a `Repository` interface to handle data operations, abstracting away the need for manual SQL.
+The application's data layer is managed by **Spring Data JPA**.
+
+- **User Entity**: Maps to the `users` table and defines the user structure (`id`, `username`, `password`, `role`).
+- **UserRepository**: Extends `JpaRepository` to provide full CRUD functionality for `User` entities.
 
 ---
 
-### 🧩 User Entity
+## 🛡️ Security Configuration
 
-The `User` class is a JPA entity that directly maps to the `users` table in our PostgreSQL database. It defines the structure of our user data, including fields for `id`, `username`, `password`, and `role`.
+Security is configured in the `SecurityConfig` class.
 
-> 📄 **File Location**:  
-> `src/main/java/com/example/usermanagementsystem/entity/User.java`
+- **Authentication**: HTTP Basic Authentication is used. Two in-memory users are created:
+    - `intern` (Role: USER)
+    - `admin` (Role: ADMIN)
+
+- **Password Encoding**: `BCryptPasswordEncoder` is used to securely hash and store all passwords.
+
+- **Authorization**: Endpoint access is restricted based on roles:
+    - `/public`: Open to all.
+    - `/user`: Requires `USER` or `ADMIN` role.
+    - `/admin`, `/users`: Requires `ADMIN` role.
 
 ---
 
-### 📁 User Repository
+## 🔌 API Endpoints
 
-The `UserRepository` interface extends `JpaRepository`, providing a full set of **CRUD (Create, Read, Update, Delete)** methods for the `User` entity out of the box. It also includes a custom method to find a user by their username.
+The `UserController` class exposes the following REST endpoints:
 
-> 📄 **File Location**:  
-> `src/main/java/com/example/usermanagementsystem/repository/UserRepository.java`
+| Method | Endpoint   | Description                    | Access        |
+|--------|------------|--------------------------------|---------------|
+| GET    | `/public`  | A public endpoint for anyone   | Public        |
+| GET    | `/user`    | An endpoint for users          | USER, ADMIN   |
+| GET    | `/admin`   | An endpoint for admins only    | ADMIN         |
+| POST   | `/users`   | Creates a new user             | ADMIN         |
 
+#### Request Body Example (POST `/users`)
+
+```json
+{
+  "username": "newuser",
+  "password": "newpassword123",
+  "role": "USER"
+}
+```
+
+---
+
+## 🧪 Testing with Postman
+
+You can use a Postman collection or test manually.
+
+- For secured endpoints, use **Basic Auth** with the following credentials:
+    - `intern` / `password123`
+    - `admin` / `admin123`
+
+---
+
+## 🤔 Assumptions
+
+- The application uses an **in-memory user store** for two predefined users (`intern`, `admin`) for simplicity and as per assignment requirements.
+- Users created via the `POST /users` endpoint are persisted in the **PostgreSQL** database.
+- **CSRF protection is disabled**, which is common for stateless REST APIs.
 
