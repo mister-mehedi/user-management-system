@@ -100,3 +100,28 @@ Once the prerequisites and configuration are complete, you can run the applicati
    ```
 
 The application will start on the embedded Tomcat server, typically on port `8080`. You should see log output indicating a successful connection to the `intern_db` database.
+
+
+## 💾 Data Model
+
+The application's data layer is managed by **Spring Data JPA**. It uses an `Entity` class to map to a database table and a `Repository` interface to handle data operations, abstracting away the need for manual SQL.
+
+---
+
+### 🧩 User Entity
+
+The `User` class is a JPA entity that directly maps to the `users` table in our PostgreSQL database. It defines the structure of our user data, including fields for `id`, `username`, `password`, and `role`.
+
+> 📄 **File Location**:  
+> `src/main/java/com/example/usermanagementsystem/entity/User.java`
+
+---
+
+### 📁 User Repository
+
+The `UserRepository` interface extends `JpaRepository`, providing a full set of **CRUD (Create, Read, Update, Delete)** methods for the `User` entity out of the box. It also includes a custom method to find a user by their username.
+
+> 📄 **File Location**:  
+> `src/main/java/com/example/usermanagementsystem/repository/UserRepository.java`
+
+
