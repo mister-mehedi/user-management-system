@@ -1,5 +1,7 @@
 package com.example.user_management_system.config;
 
+import com.example.user_management_system.exception.CustomAccessDeniedHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -22,6 +24,14 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    // Inject our custom handler
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
+
+    @Autowired
+    public SecurityConfig(CustomAccessDeniedHandler customAccessDeniedHandler) {
+        this.customAccessDeniedHandler = customAccessDeniedHandler;
+    }
 
     /**
      * Defines a PasswordEncoder bean to be used for encoding and validating passwords.
@@ -60,6 +70,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 // Enable HTTP Basic Authentication.
+                // We configure the exception handling to use our custom handler.
+                .exceptionHandling(e -> e.accessDeniedHandler(customAccessDeniedHandler))
                 .httpBasic(Customizer.withDefaults());
 
         return http.build();

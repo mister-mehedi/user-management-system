@@ -1,7 +1,9 @@
 package com.example.user_management_system.controller;
 
 import com.example.user_management_system.entity.User;
+import com.example.user_management_system.exception.ResourceConflictException;
 import com.example.user_management_system.repository.UserRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -70,12 +72,20 @@ public class UserController {
      * Handles POST requests to the /users endpoint to create a new user.
      * This endpoint is accessible only by users with the "ADMIN" role.
      * The user details are passed in the request body as JSON.
+     * The @Valid annotation triggers the validation rules on the newUser object.
+     * If validation fails, it will throw a MethodArgumentNotValidException.
      *
      * @param newUser The User object to be created.
      * @return A ResponseEntity containing the created User and HTTP status 201 (Created).
      */
     @PostMapping("/users")
-    public ResponseEntity<User> createUser(@RequestBody User newUser) {
+    public ResponseEntity<User> createUser(@Valid @RequestBody User newUser) {
+        // Check if username or email already exists (we'll handle this better in the next step)
+        if (userRepository.findByUsername(newUser.getUsername()).isPresent()) {
+            throw new ResourceConflictException("Username '" + newUser.getUsername() + "' is already taken.");
+        }
+
+        // If no exception is thrown, we proceed to create the user.
         // Before saving, encode the plain-text password.
         newUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
         // Save the new user to the database.
